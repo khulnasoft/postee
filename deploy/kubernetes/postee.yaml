@@ -1,0 +1,334 @@
+## postee-configmap
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: postee-config
+data:
+  cfg.yaml: |
+    ---
+    # Reference: https://github.com/khulnasoft/postee/blob/main/cfg.yaml
+
+    actions:
+      - type: email
+        name: my-email
+        user: xxxxxx@gmail.com
+        host: smtp.gmail.com
+        port: 587
+        sender: xxxxxxxx@gmail.com
+        recipients:
+          - xxxxxxxxx@xxxxx.com
+        password: xxxxxxxxxx
+        enable: false
+      - type: serviceNow
+        name: my-service-now
+        enable: false
+        user: xxxxxxxxx
+        password: xxxxxxxxxx
+        instance: xxxxxxxx
+      - type: slack
+        name: my-slack
+        enable: false
+        url: >-
+          https://hooks.slack.com/services/xxxxxxx/xxxxxxx/xxxxxxx
+      - type: teams
+        name: my-teams
+        enable: false
+        url: >-
+          https://xxxxxxxx.webhook.office.com/webhookb2/xxxxxxxx/IncomingWebhook/xxxxx/xxxxx
+    routes:
+      - name: slack-route
+        input: contains(input.image, "alpine")
+        actions:
+          - my-slack
+        template: legacy-slack
+        plugins:
+          aggregate-issues-number: null
+          aggregate-issues-timeout: null
+          policy-show-all: true
+        output: []
+      - output: []
+        name: email-route
+        input: |
+          contains(input.image,"alpine")
+        actions:
+          - my-email
+        template: legacy
+      - output: []
+        name: servicenow-route
+        input: contains(input.image,"alpine")
+        actions:
+          - my-service-now
+        template: legacy
+      - output: []
+        name: msTeams-route
+        actions:
+          - my-teams
+        template: legacy
+    templates:
+      - name: slack-template
+        rego-package: postee.vuls.slack
+      - name: rego-html
+        rego-package: postee.vuls.html
+      - name: legacy
+        legacy-scan-renderer: html
+      - name: legacy-slack
+        legacy-scan-renderer: slack
+      - name: custom-email
+        url: null
+      - name: trivy-operator-jira
+        rego-package: postee.trivyoperator.jira
+      - name: trivy-operator-slack
+        rego-package: postee.trivyoperator.slack
+    name: tenant
+    KhulnasoftServer: https://xxxxxxxxxxx.com
+
+## postee
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: postee
+  name: postee-svc
+spec:
+  ports:
+    - name: https
+      port: 8445
+      protocol: TCP
+      targetPort: 8445
+    - name: http
+      port: 8082
+      protocol: TCP
+      targetPort: 8082
+  selector:
+    app: postee
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: postee
+  name: postee
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postee
+  serviceName: postee-svc
+  volumeClaimTemplates:
+    - metadata:
+        name: postee-db
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 1Gi
+    - metadata:
+        name: postee-config
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 100Mi
+    - metadata:
+        name: rego-templates
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 100Mi
+    - metadata:
+        name: rego-filters
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 100Mi
+  template:
+    metadata:
+      labels:
+        app: postee
+      name: postee
+    spec:
+      initContainers:
+        - name: setting-db
+          image: busybox:1.34
+          command:
+            - /bin/chown
+            - -R
+            - "1099:1099"
+            - /server
+          volumeMounts:
+            - name: postee-db
+              mountPath: /server/database
+            - name: rego-templates
+              mountPath: /server/rego-templates/custom
+            - name: rego-filters
+              mountPath: /server/rego-filters/custom
+        - name: setting-cfg
+          image: busybox:1.34
+          command:
+            - cp
+            - /configmap/cfg.yaml
+            - /config/cfg.yaml
+          volumeMounts:
+            - name: configmap-vol
+              mountPath: /configmap
+              readOnly: false
+            - name: postee-config
+              mountPath: /config
+      containers:
+        - image: khulnasoft/postee:latest
+          imagePullPolicy: Always
+          name: postee
+          env:
+            - name: POSTEE_CFG
+              value: /config/cfg.yaml
+            - name: POSTEE_DEBUG
+              value: "not"
+          ports:
+            - name: http
+              containerPort: 8082
+              protocol: TCP
+            - name: tls
+              containerPort: 8445
+              protocol: TCP
+          volumeMounts:
+            - name: postee-db
+              mountPath: /server/database
+            - name: postee-config
+              mountPath: /config
+            - name: rego-templates
+              mountPath: /server/rego-templates/custom
+            - name: rego-filters
+              mountPath: /server/rego-filters/custom
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1099
+            runAsGroup: 1099
+          resources:
+            limits:
+              cpu: 500m
+              memory: 256Mi
+            requests:
+              cpu: 200m
+              memory: 128Mi
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: 8082
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: 8082
+            initialDelaySeconds: 10
+            periodSeconds: 10
+      volumes:
+        - name: configmap-vol
+          configMap:
+            name: postee-config
+            items:
+            - key: cfg.yaml
+              path: cfg.yaml
+## postee-ui
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postee-ui-svc
+spec:
+  ports:
+    - name: postee-ui
+      port: 8000
+      protocol: TCP
+      targetPort: 8000
+  selector:
+    app: postee-ui
+  type: LoadBalancer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: postee-ui
+  name: postee-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postee-ui
+  template:
+    metadata:
+      labels:
+        app: postee-ui
+    spec:
+      initContainers:
+        - name: chmod-er
+          image: busybox:1.34
+          command:
+            - /bin/chown
+            - -R
+            - "1099:1099"
+            - /config
+          volumeMounts:
+            - name: postee-config
+              mountPath: /config
+      containers:
+        - image: khulnasoft/postee-ui:latest
+          imagePullPolicy: Always
+          name: postee-ui
+          env:
+            - name: POSTEE_UI_CFG
+              value: /config/cfg.yaml
+            - name: POSTEE_UI_PORT
+              value: "8000"
+            - name: POSTEE_UI_UPDATE_URL
+              value: "http://postee-svc:8082"
+            - name: POSTEE_ADMIN_USER
+              value: admin
+            - name: POSTEE_ADMIN_PASSWORD
+              value: admin
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          volumeMounts:
+            - name: postee-db
+              mountPath: /server/database
+            - name: postee-config
+              mountPath: /config
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1099
+            runAsGroup: 1099
+          resources:
+            limits:
+              cpu: 500m
+              memory: 256Mi
+            requests:
+              cpu: 200m
+              memory: 128Mi
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+      volumes:
+        - name: postee-db
+          persistentVolumeClaim:
+            claimName: postee-db-postee-0
+        - name: postee-config
+          persistentVolumeClaim:
+            claimName: postee-config-postee-0

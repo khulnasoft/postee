@@ -1,0 +1,61 @@
+#Create the volume for the Postee volumeClaimTemplates
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: postee-db
+  labels:
+    app: postee-db
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /tmp/postee/db/
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: postee-config
+  labels:
+    app: postee-config
+spec:
+  capacity:
+    storage: 100Mi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /tmp/postee/config/
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: postee-rego-templates
+  labels:
+    app: postee-rego-templates
+spec:
+  capacity:
+    storage: 100Mi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /tmp/postee/rego-templates/
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: postee-rego-filters
+  labels:
+    app: postee-rego-filters
+spec:
+  capacity:
+    storage: 100Mi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /tmp/postee/rego-filters/
