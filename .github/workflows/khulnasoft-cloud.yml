@@ -15,14 +15,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run Trivy vulnerability scanner against Khulnasoft Cloud
-        uses: aquasecurity/trivy-action@0.11.0
+        uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
           hide-progress: true
           format: 'table'
-          security-checks: 'vuln,config'
-        env:
-          KHULNASOFT_KEY: ${{ secrets.KHULNASOFT_KEY }}
-          KHULNASOFT_SECRET: ${{ secrets.KHULNASOFT_SECRET }}
-          TRIVY_RUN_AS_PLUGIN: 'khulnasoft'
 
