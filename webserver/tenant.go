@@ -5,9 +5,9 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	"github.com/khulnasoft/postee/v2/router"
 	"github.com/khulnasoft/postee/v2/utils"
-	"github.com/gorilla/mux"
 )
 
 func (ctx *WebServer) tenantHandler(w http.ResponseWriter, r *http.Request) {

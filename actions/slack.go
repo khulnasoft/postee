@@ -19,10 +19,10 @@ const (
 )
 
 type SlackAction struct {
-	Name        string
-	KhulnasoftServer  string
-	Url         string
-	slackLayout layout.LayoutProvider
+	Name             string
+	KhulnasoftServer string
+	Url              string
+	slackLayout      layout.LayoutProvider
 }
 
 func (slack *SlackAction) GetName() string {

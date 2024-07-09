@@ -16,10 +16,10 @@ const (
 )
 
 type TeamsAction struct {
-	Name        string
-	KhulnasoftServer  string
-	teamsLayout layout.LayoutProvider
-	Webhook     string
+	Name             string
+	KhulnasoftServer string
+	teamsLayout      layout.LayoutProvider
+	Webhook          string
 }
 
 func (teams *TeamsAction) GetName() string {

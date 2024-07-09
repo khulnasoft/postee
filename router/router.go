@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ghodss/yaml"
 	"github.com/khulnasoft/postee/v2/actions"
 	"github.com/khulnasoft/postee/v2/data"
 	"github.com/khulnasoft/postee/v2/dbservice"
@@ -21,7 +22,6 @@ import (
 	"github.com/khulnasoft/postee/v2/regoservice"
 	"github.com/khulnasoft/postee/v2/routes"
 	"github.com/khulnasoft/postee/v2/utils"
-	"github.com/ghodss/yaml"
 	"github.com/nats-io/nats-server/v2/server"
 	"github.com/nats-io/nats.go"
 )
@@ -40,17 +40,17 @@ type Router struct {
 	RunnerName    string
 	ControllerURL string
 
-	mutexScan       sync.Mutex
-	quit            chan struct{}
-	readOnlyEvents  *ring.Ring
-	inputEventQueue chan []byte
-	ticker          *time.Ticker
-	stopTicker      chan struct{}
-	cfgfile         string
-	khulnasoftServer      string
-	actions         map[string]actions.Action
-	inputRoutes     map[string]*routes.InputRoute
-	templates       map[string]data.Inpteval
+	mutexScan        sync.Mutex
+	quit             chan struct{}
+	readOnlyEvents   *ring.Ring
+	inputEventQueue  chan []byte
+	ticker           *time.Ticker
+	stopTicker       chan struct{}
+	cfgfile          string
+	khulnasoftServer string
+	actions          map[string]actions.Action
+	inputRoutes      map[string]*routes.InputRoute
+	templates        map[string]data.Inpteval
 }
 
 var (

@@ -7,12 +7,12 @@ import (
 	"log"
 	"strings"
 
-	"github.com/khulnasoft/postee/v2/formatting"
-	"github.com/khulnasoft/postee/v2/layout"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/securityhub"
 	"github.com/aws/aws-sdk-go-v2/service/securityhub/types"
+	"github.com/khulnasoft/postee/v2/formatting"
+	"github.com/khulnasoft/postee/v2/layout"
 )
 
 type securityHubAPI interface {

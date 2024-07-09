@@ -34,9 +34,9 @@ func buildWebhookAction(sourceSettings *ActionSettings) *actions.WebhookAction {
 
 func buildTeamsAction(sourceSettings *ActionSettings, khulnasoftServer string) *actions.TeamsAction {
 	return &actions.TeamsAction{
-		Name:       sourceSettings.Name,
+		Name:             sourceSettings.Name,
 		KhulnasoftServer: khulnasoftServer,
-		Webhook:    sourceSettings.Url,
+		Webhook:          sourceSettings.Url,
 	}
 }
 
@@ -56,9 +56,9 @@ func buildServiceNow(sourceSettings *ActionSettings) *actions.ServiceNowAction {
 
 func buildSlackAction(sourceSettings *ActionSettings, khulnasoft string) *actions.SlackAction {
 	return &actions.SlackAction{
-		Name:       sourceSettings.Name,
+		Name:             sourceSettings.Name,
 		KhulnasoftServer: khulnasoft,
-		Url:        sourceSettings.Url,
+		Url:              sourceSettings.Url,
 	}
 }
 

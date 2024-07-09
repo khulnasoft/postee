@@ -10,10 +10,10 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/gorilla/mux"
 	"github.com/khulnasoft/postee/v2/dbservice"
 	"github.com/khulnasoft/postee/v2/router"
 	"github.com/khulnasoft/postee/v2/utils"
-	"github.com/gorilla/mux"
 )
 
 type WebServer struct {
